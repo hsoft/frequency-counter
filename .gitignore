@@ -1,0 +1,4 @@
+__pycache__
+*.o
+/sim/freqcounter
+/sim/seg7multiplex

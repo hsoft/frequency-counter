@@ -1,0 +1,9 @@
+[submodule "sim/icemu"]
+	path = sim/icemu
+	url = https://github.com/hsoft/icemu.git
+[submodule "seg7-multiplex"]
+	path = seg7-multiplex
+	url = https://github.com/hsoft/seg7-multiplex.git
+[submodule "common"]
+	path = common
+	url = https://github.com/hsoft/avr-common.git
