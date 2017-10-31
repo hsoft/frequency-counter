@@ -46,10 +46,15 @@ static void senddigit(uint8_t val, bool withdot)
 
 static void sendval(uint32_t val)
 {
-    char i;
+    char i, dotpos;
 
+    dotpos = MAX_DIGITS-1; // 123 --> 0.123
+    while ((val > int_pow10(MAX_DIGITS)) && (dotpos > 0)) {
+        val /= 10;
+        dotpos--;
+    }
     for (i=0; i<MAX_DIGITS; i++) {
-        senddigit(val % 10, false);
+        senddigit(val % 10, i==dotpos);
         val /= 10;
     }
 }
