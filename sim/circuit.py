@@ -18,7 +18,9 @@ class Circuit(SimulationWithUI):
         for chip in self.seg7._chips:
             self.add_chip(chip)
 
-        self.input_value = Pin('INPUT', output=True, oscillating_freq=500)
+        self.input_value = self.add_chip(Pin('INPUT', output=True, oscillating_freq=500))
+        self.mcu.pin_B0.wire_to(self.input_value)
+        self.mcu.enable_interrupt_on_pin(self.mcu.pin_B0, rising=True, falling=True)
         self._setup_ui()
 
     def _setup_ui(self):

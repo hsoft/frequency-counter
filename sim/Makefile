@@ -3,7 +3,7 @@ OBJS += $(addprefix ../src/, freqcounter.o)
 OBJS += $(addprefix ../common/, sim_pin.o sim_timer.o intmath.o)
 OBJS += $(addprefix icemu/capi/, icemu.o)
 
-TO_CLEAN = $(OBJS) $(PROGNAME)
+TO_CLEAN = $(OBJS) $(PROGNAME) seg7multiplex
 
 SUBMODULE_TARGETS = ../common/README.md
 

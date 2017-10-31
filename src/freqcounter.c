@@ -13,13 +13,14 @@
 #include "../common/intmath.h"
 
 #define MAX_DIGITS 4
-#define SAMPLE_DURATION_US 100
+#define SAMPLES_PER_SECOND 3
 
 #define INPUT PinB0
 #define SEG7SER PinB1
 #define SEG7CLK PinB2
 
-static volatile uint16_t tick_counter;
+static volatile uint32_t tick_counter;
+static volatile uint32_t last_sample;
 static volatile bool refresh_needed;
 
 static void toggleclk(Pin pin)
@@ -56,7 +57,17 @@ static void sendval(uint32_t val)
 static void reset()
 {
     tick_counter = 0;
+    last_sample = 0;
     refresh_needed = false;
+}
+
+#ifndef SIMULATION
+ISR(INT0_vect)
+#else
+void freqcounter_int0_interrupt()
+#endif
+{
+    tick_counter++;
 }
 
 #ifndef SIMULATION
@@ -65,6 +76,8 @@ ISR(TIMER0_COMPA_vect)
 void freqcounter_timer0_interrupt()
 #endif
 {
+    last_sample = tick_counter;
+    tick_counter = 0;
     refresh_needed = true;
 }
 
@@ -78,18 +91,16 @@ void freqcounter_setup()
     pinoutputmode(SEG7SER);
 
     reset();
-    refresh_needed = true;
 
     // Set timer that controls refreshes
-    set_timer0_target(1000*100); // every 100 ms
+    set_timer0_target(1000UL*1000UL/SAMPLES_PER_SECOND);
     set_timer0_mode(TIMER_MODE_INTERRUPT);
 }
 
 void freqcounter_loop()
 {
     if (refresh_needed) {
-        sendval(tick_counter);
-        tick_counter++;
+        sendval(last_sample * SAMPLES_PER_SECOND);
         refresh_needed = false;
     }
 }
