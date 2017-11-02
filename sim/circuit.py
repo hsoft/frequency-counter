@@ -10,7 +10,7 @@ from seg7_circuit import Circuit as Seg7Circuit
 
 class Circuit(SimulationWithUI):
     def __init__(self):
-        super().__init__()
+        super().__init__(usec_value=30)
         self.mcu = self.add_chip(ATtiny())
         self.mcu.run_program('freqcounter')
         serial_input = namedtuple('SerialInput', 'ser clk')(self.mcu.pin_B1, self.mcu.pin_B2)
@@ -18,7 +18,7 @@ class Circuit(SimulationWithUI):
         for chip in self.seg7._chips:
             self.add_chip(chip)
 
-        self.input_value = self.add_chip(Pin('INPUT', output=True, oscillating_freq=500))
+        self.input_value = self.add_chip(Pin('INPUT', output=True, oscillating_freq=1500))
         self.mcu.pin_B0.wire_to(self.input_value)
         self.mcu.enable_interrupt_on_pin(self.mcu.pin_B0, rising=True, falling=True)
         self._setup_ui()
