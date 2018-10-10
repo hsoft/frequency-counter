@@ -1,0 +1,12 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP LSHD-A101
+D LSHD-A101
+K display LED 7-segment
+$ENDCMP
+#
+$CMP SN74HC161
+D 4 bit synchronous binary counter
+$ENDCMP
+#
+#End Doc Library

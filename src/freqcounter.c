@@ -5,58 +5,89 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #else
-#include "../common/sim.h"
+#include "icemu.h"
 #endif
 
+#include "../common/util.h"
 #include "../common/pin.h"
 #include "../common/timer.h"
 #include "../common/intmath.h"
 
-#define MAX_DIGITS 4
-#define SAMPLES_PER_SECOND 3
+#define DIGITS 4
+#define SAMPLES_PER_SECOND 1
+#define PRESCALER 256
 
-#define INPUT PinB0
-#define SEG7SER PinB1
-#define SEG7CLK PinB2
+#define FREQ256 PinB2
+#define OUTCLK PinB0
+#define OUTSER PinB1
 
 static volatile uint32_t tick_counter;
 static volatile uint32_t last_sample;
 static volatile bool refresh_needed;
 
-static void toggleclk(Pin pin)
+typedef struct {
+    bool haswork;
+    PinID clk;
+    PinID ser;
+    uint8_t digits[DIGITS];
+    uint8_t dotpos;
+    uint8_t digit_index;
+    uint8_t bit_index;
+} Seg7SerialOp;
+
+static Seg7SerialOp serialop = {0};
+
+static void serialop_init(PinID clk, PinID ser, uint32_t val)
 {
-    pinlow(pin);
+    uint8_t i;
+
+    /*icemu_sim_set_debug_value("display", val);*/
+    serialop.haswork = false;
+    serialop.clk = clk;
+    serialop.ser = ser;
+
+    serialop.dotpos = DIGITS - 1; // 123 --> 0.123
+    while ((val > int_pow10(DIGITS)) && (serialop.dotpos > 0)) {
+        val /= 10;
+        serialop.dotpos--;
+    }
+    for (i=0; i<DIGITS; i++) {
+        serialop.digits[i] = val % 10;
+        val /= 10;
+    }
+    serialop.digit_index = 0;
+    serialop.bit_index = 0;
+    serialop.haswork = true;
+
+    // Start the serial protocol with an empty clock.
+    pinlow(clk);
     _delay_us(1);
-    pinhigh(pin);
+    pinhigh(clk);
 }
 
-static void senddigit(uint8_t val, bool withdot)
+static bool serialop_pushbit()
 {
-    char i;
     bool flag;
 
-    for (i=0; i<4; i++) {
-        flag = (val >> i) & 0x1;
-        pinset(SEG7SER, flag);
-        toggleclk(SEG7CLK);
+    if (!serialop.haswork) {
+        return false;
     }
-    pinset(SEG7SER, withdot);
-    toggleclk(SEG7CLK);
-}
-
-static void sendval(uint32_t val)
-{
-    char i, dotpos;
-
-    dotpos = MAX_DIGITS-1; // 123 --> 0.123
-    while ((val > int_pow10(MAX_DIGITS)) && (dotpos > 0)) {
-        val /= 10;
-        dotpos--;
+    pinlow(serialop.clk);
+    _delay_us(1);
+    if (serialop.bit_index < 4) {
+        flag = serialop.digits[serialop.digit_index] & (1 << serialop.bit_index);
+        serialop.bit_index ++;
+    } else {
+        flag = serialop.dotpos == serialop.digit_index;
+        serialop.bit_index = 0;
+        serialop.digit_index++;
+        if (serialop.digit_index == DIGITS ) {
+            serialop.haswork = false;
+        }
     }
-    for (i=0; i<MAX_DIGITS; i++) {
-        senddigit(val % 10, i==dotpos);
-        val /= 10;
-    }
+    pinset(serialop.ser, flag);
+    pinhigh(serialop.clk);
+    return serialop.haswork;
 }
 
 static void reset()
@@ -72,6 +103,7 @@ ISR(INT0_vect)
 void freqcounter_int0_interrupt()
 #endif
 {
+    /*icemu_sim_set_debug_value("hello", 42);*/
     tick_counter++;
 }
 
@@ -89,11 +121,16 @@ void freqcounter_timer0_interrupt()
 void freqcounter_setup()
 {
 #ifndef SIMULATION
+    // generate interrupt on rising edge of INT0
+    sbi(MCUCR, ISC00);
+    sbi(MCUCR, ISC01);
+    // enable Pin Change Interrupts
+    sbi(GIMSK, INT0);
     sei();
 #endif
 
-    pinoutputmode(SEG7CLK);
-    pinoutputmode(SEG7SER);
+    pinoutputmode(OUTCLK);
+    pinoutputmode(OUTSER);
 
     reset();
 
@@ -104,9 +141,11 @@ void freqcounter_setup()
 
 void freqcounter_loop()
 {
-    if (refresh_needed) {
-        sendval(last_sample * SAMPLES_PER_SECOND);
-        refresh_needed = false;
+    if (!serialop_pushbit()) {
+        if (refresh_needed) {
+            serialop_init(OUTCLK, OUTSER, last_sample * SAMPLES_PER_SECOND);
+            refresh_needed = false;
+        }
     }
 }
 

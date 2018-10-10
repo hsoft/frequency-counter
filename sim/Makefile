@@ -1,24 +1,21 @@
-OBJS = main.o
+OBJS = main.o circuit.o
 OBJS += $(addprefix ../src/, freqcounter.o)
-OBJS += $(addprefix ../common/, sim_pin.o sim_timer.o intmath.o)
-OBJS += $(addprefix icemu/capi/, icemu.o)
+OBJS += $(addprefix ../seg7-multiplex/src/, seg7multiplex.o)
+OBJS += $(addprefix ../seg7-multiplex/sim/, circuit.o)
+OBJS += $(addprefix ../common/, intmath.o)
 
-TO_CLEAN = $(OBJS) $(PROGNAME) seg7multiplex
+TO_CLEAN = $(OBJS) $(PROGNAME)
 
 SUBMODULE_TARGETS = ../common/README.md
 
-ALL = $(SUBMODULE_TARGETS) $(PROGNAME) seg7multiplex
+ALL = $(SUBMODULE_TARGETS) $(PROGNAME)
 
 include ../common.mk
 
-CFLAGS = -I. -DSIMULATION $(COMMON_CFLAGS) -c
-LDFLAGS = -I.
+CFLAGS = -I. -Iicemu/src -DSIMULATION $(COMMON_CFLAGS) -c
+LDFLAGS = -Licemu -licemu `pkg-config --libs --static ncurses libftdi1`
 
 # Rules
 $(PROGNAME): $(OBJS)
-	$(CC) $(LDFLAGS) $+ -o $@
-
-seg7multiplex: $(SUBMODULE_TARGETS)
-	MAX_DIGITS=4 make -C ../seg7-multiplex/sim clean all
-	cp ../seg7-multiplex/sim/seg7multiplex .
-
+	$(MAKE) -C icemu clean all
+	$(CC) $+ -o $@ $(LDFLAGS)
