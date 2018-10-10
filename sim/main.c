@@ -8,7 +8,6 @@
 #include "circuit.h"
 #include "../seg7-multiplex/sim/circuit.h"
 
-void freqcounter_int0_interrupt();
 void seg7multiplex_int0_interrupt();
 void seg7multiplex_timer0_interrupt();
 void seg7multiplex_setup();
@@ -105,18 +104,13 @@ int main(void)
     icemu_pin_init(&input, NULL, "INPUT", true);
     freqcounter_circuit_init(&circuit, &outser, &outclk, &input);
     seg7multiplex_circuit_init(&seg7, &outser, &outclk);
-    icemu_pin_set_oscillating_freq(&input, 2500);
+    icemu_pin_set_oscillating_freq(&input, 250000);
 
     active = &circuit.mcu;
     freqcounter_setup();
     active = &seg7.mcu;
     seg7multiplex_setup();
     active = NULL;
-    icemu_mcu_add_interrupt(
-        &circuit.mcu,
-        icemu_chip_getpin(&circuit.mcu, "PB2"),
-        ICE_INTERRUPT_ON_RISING,
-        freqcounter_int0_interrupt);
     icemu_mcu_add_interrupt(
         &seg7.mcu,
         icemu_chip_getpin(&seg7.mcu, "PB2"),
@@ -125,7 +119,8 @@ int main(void)
 
     icemu_sim_init();
     icemu_ui_add_element("MCU", &circuit.mcu);
-    for (i = 0; i < DIGITS; i++) {
+    icemu_ui_add_element("kHz", &seg7.segs[DIGITS - 1]);
+    for (i = 1; i < DIGITS; i++) {
         icemu_ui_add_element("", &seg7.segs[DIGITS - i - 1]);
     }
     icemu_sim_run();

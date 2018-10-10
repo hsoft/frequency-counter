@@ -41,7 +41,6 @@ static void serialop_init(PinID clk, PinID ser, uint32_t val)
 {
     uint8_t i;
 
-    /*icemu_sim_set_debug_value("display", val);*/
     serialop.haswork = false;
     serialop.clk = clk;
     serialop.ser = ser;
@@ -103,7 +102,6 @@ ISR(INT0_vect)
 void freqcounter_int0_interrupt()
 #endif
 {
-    /*icemu_sim_set_debug_value("hello", 42);*/
     tick_counter++;
 }
 
@@ -143,7 +141,10 @@ void freqcounter_loop()
 {
     if (!serialop_pushbit()) {
         if (refresh_needed) {
-            serialop_init(OUTCLK, OUTSER, last_sample * SAMPLES_PER_SECOND);
+            serialop_init(
+                OUTCLK,
+                OUTSER,
+                last_sample * PRESCALER * SAMPLES_PER_SECOND);
             refresh_needed = false;
         }
     }
