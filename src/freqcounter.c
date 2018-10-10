@@ -20,9 +20,10 @@
 #define FREQ256 PinB2
 #define OUTCLK PinB0
 #define OUTSER PinB1
+#define MHZ PinB3
 
-static volatile uint32_t tick_counter;
-static volatile uint32_t last_sample;
+static volatile uint16_t tick_counter;
+static volatile uint16_t last_ticks;
 static volatile bool refresh_needed;
 
 typedef struct {
@@ -37,7 +38,7 @@ typedef struct {
 
 static Seg7SerialOp serialop = {0};
 
-static void serialop_init(PinID clk, PinID ser, uint32_t val)
+static void serialop_init(PinID clk, PinID ser, uint16_t val)
 {
     uint8_t i;
 
@@ -92,7 +93,7 @@ static bool serialop_pushbit()
 static void reset()
 {
     tick_counter = 0;
-    last_sample = 0;
+    last_ticks = 0;
     refresh_needed = false;
 }
 
@@ -111,7 +112,7 @@ ISR(TIMER0_COMPA_vect)
 void freqcounter_timer0_interrupt()
 #endif
 {
-    last_sample = tick_counter;
+    last_ticks = tick_counter;
     tick_counter = 0;
     refresh_needed = true;
 }
@@ -129,6 +130,7 @@ void freqcounter_setup()
 
     pinoutputmode(OUTCLK);
     pinoutputmode(OUTSER);
+    pinoutputmode(MHZ);
 
     reset();
 
@@ -139,12 +141,18 @@ void freqcounter_setup()
 
 void freqcounter_loop()
 {
+    uint32_t val;
+
     if (!serialop_pushbit()) {
         if (refresh_needed) {
-            serialop_init(
-                OUTCLK,
-                OUTSER,
-                last_sample * PRESCALER * SAMPLES_PER_SECOND);
+            val = 1UL * last_ticks * PRESCALER * SAMPLES_PER_SECOND;
+            if (val > 1000000) {
+                val /= 1000;
+                pinhigh(MHZ);
+            } else {
+                pinlow(MHZ);
+            }
+            serialop_init(OUTCLK, OUTSER, val);
             refresh_needed = false;
         }
     }

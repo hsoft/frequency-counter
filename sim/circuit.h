@@ -5,6 +5,7 @@ typedef struct {
     ICeChip mcu;
     ICeChip cnt1;
     ICeChip cnt2;
+    ICeChip mhz_led;
 } FreqCounter;
 
 void freqcounter_circuit_init(

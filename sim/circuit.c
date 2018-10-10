@@ -15,6 +15,7 @@ void freqcounter_circuit_init(
         freqcounter_int0_interrupt);
     icemu_SN74F161AN_init(&circuit->cnt1);
     icemu_SN74F161AN_init(&circuit->cnt2);
+    icemu_ledmatrix_init(&circuit->mhz_led, 1, 1, false);
     icemu_pin_wireto(icemu_chip_getpin(&circuit->cnt1, "CLK"), input);
     icemu_pin_wireto(
         icemu_chip_getpin(&circuit->cnt2, "CLK"),
@@ -26,4 +27,9 @@ void freqcounter_circuit_init(
         icemu_chip_getpin(&circuit->mcu, "PB2"),
         icemu_chip_getpin(&circuit->cnt2, "QD")
     );
+    icemu_pin_wireto(
+        icemu_chip_getpin(&circuit->mcu, "PB3"),
+        circuit->mhz_led.pins.pins[0]
+    );
+
 }

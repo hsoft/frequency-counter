@@ -164,7 +164,6 @@ Wire Wire Line
 Text Label 4100 1800 0    50   ~ 0
 FREQ256
 NoConn ~ 4750 2000
-NoConn ~ 4750 1900
 $Comp
 L Connector:USB_A J?
 U 1 1 5BBD427B
@@ -195,4 +194,38 @@ Text Label 4300 1050 0    50   ~ 0
 OUTCLK
 Text Label 4300 1150 0    50   ~ 0
 OUTSER
+$Comp
+L Device:LED D?
+U 1 1 5BBE2961
+P 5150 2900
+F 0 "D?" H 5142 3116 50  0000 C CNN
+F 1 "LED" H 5142 3025 50  0000 C CNN
+F 2 "" H 5150 2900 50  0001 C CNN
+F 3 "~" H 5150 2900 50  0001 C CNN
+	1    5150 2900
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5BBE2DFC
+P 4850 2900
+F 0 "R?" V 4750 2900 50  0000 C CNN
+F 1 "110" V 4850 2900 50  0000 C CNN
+F 2 "" V 4780 2900 50  0001 C CNN
+F 3 "~" H 4850 2900 50  0001 C CNN
+	1    4850 2900
+	0    1    1    0   
+$EndComp
+Text Label 4600 1900 0    50   ~ 0
+MHZ
+Wire Wire Line
+	4750 1900 4600 1900
+Wire Wire Line
+	4600 1900 4600 2900
+Wire Wire Line
+	4600 2900 4700 2900
+Wire Wire Line
+	5300 2900 5350 2900
+Wire Wire Line
+	5350 2900 5350 2500
 $EndSCHEMATC

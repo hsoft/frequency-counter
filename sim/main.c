@@ -104,7 +104,7 @@ int main(void)
     icemu_pin_init(&input, NULL, "INPUT", true);
     freqcounter_circuit_init(&circuit, &outser, &outclk, &input);
     seg7multiplex_circuit_init(&seg7, &outser, &outclk);
-    icemu_pin_set_oscillating_freq(&input, 250000);
+    icemu_pin_set_oscillating_freq(&input, 1200 * 1000);
 
     active = &circuit.mcu;
     freqcounter_setup();
@@ -123,6 +123,7 @@ int main(void)
     for (i = 1; i < DIGITS; i++) {
         icemu_ui_add_element("", &seg7.segs[DIGITS - i - 1]);
     }
+    icemu_ui_add_element("MHz", &circuit.mhz_led);
     icemu_sim_run();
     return 0;
 }
